@@ -1,0 +1,43 @@
+The following critical parameters:
+# === GLOBAL PRIVACY PARAMETERS ===
+global_privacy:
+  epsilon_total: 1.0
+  delta_total: 1e-5
+  composition_type: "advanced" # Used for budget accounting
+
+# === QUERY & SENSITIVITY SPECIFICATION ===
+queries:
+  - name: "average_heart_rate"
+    type: "average"
+    global_sensitivity_l1: 200.0  # BPM: max(0, 300) assuming medical bounds
+    query_sql: "SELECT AVG(valuenum) FROM chartevents WHERE itemid IN (211, 220045)"
+  - name: "sepsis_indicator_count"
+    type: "count"
+    global_sensitivity_l1: 1.0    # Binary indicator per patient
+    query_sql: "SELECT COUNT(*) FROM diagnoses WHERE icd9_code LIKE '995.9%'"
+
+# === NOISE MECHANISM ===
+noise:
+  distribution: "laplace"
+  scale_calibration: "global_sensitivity" # vs. local_smooth_sensitivity
+
+# === ZKP CRYPTOGRAPHIC PARAMETERS ===
+crypto:
+  curve: "secp256k1"              # Elliptic curve group
+  security_parameter_lambda: 128
+  hash_algorithm: "sha3_256"
+  bulletproof_setup: "transparent"
+
+# === SMPC PARAMETERS ===
+mpc:
+  secret_sharing_scheme: "shamir"
+  reconstruction_threshold_t: 3   # For n=5 nodes (t < n/2 for robustness)
+
+# === EXPERIMENT EXECUTION ===
+experiment:
+  random_seed_dp: 42
+  random_seed_zkp: 12345
+  random_seed_mpc: 78901
+  num_hospital_nodes: 5
+  num_query_iterations: 50
+  dataset_subsample: "mimiciii_1.4_subset_1000patients.csv"
